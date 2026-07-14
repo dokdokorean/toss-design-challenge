@@ -1135,7 +1135,7 @@ function MeetingDetails() {
                               cursor: 'default',
                               transition: 'opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease',
                               ...(isAnyRequiredUnavailable
-                                ? { backgroundColor: 'rgba(239, 68, 68, 0.08)' }
+                                ? { backgroundColor: 'rgba(239, 68, 68, 0.12)' }
                                 : ratio > 0
                                   ? { backgroundColor: `rgba(16, 185, 129, ${0.08 + ratio * 0.82})` }
                                   : { backgroundColor: '#ffffff' }),
@@ -1489,12 +1489,12 @@ function MeetingDetails() {
 
                               if (totalMins < 30) {
                                 // Under 30 minutes warning
-                                setWarningMessage("범비보다 긴 회의 시간은 설정할 수 없어요.");
+                                setWarningMessage("30분보다 짧은 시간은 설정할 수 없어요");
                                 setShowWarningToast(true);
                                 setTimeout(() => setShowWarningToast(false), 3000);
                               } else if (totalMins > maxAllowedMins) {
                                 // Over maximum range limits
-                                setWarningMessage("범위보다 긴 회의 시간은 설정할 수 없어요.");
+                                setWarningMessage("범위보다 긴 시간은 설정할 수 없어요");
                                 setShowWarningToast(true);
                                 setTimeout(() => setShowWarningToast(false), 3000);
                               } else {
@@ -1568,107 +1568,132 @@ function MeetingDetails() {
                       )}
                     </div>
 
-                    {/* Toss-style Custom Range Slider - Smoothly slides up/down when meetingDuration changes */}
-                    <div style={{
-                      maxHeight: meetingDuration > 8 ? '0px' : '60px',
-                      opacity: meetingDuration > 8 ? 0 : 1,
-                      overflow: 'hidden',
-                      transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                      width: '100%'
-                    }}>
+                    {/* Toss-style Custom Range Slider - Gray out instead of hiding when duration exceeds 4 hours, and restore on click */}
+                    {(() => {
+                      const displayDuration = meetingDuration > 8 ? 8 : meetingDuration;
+                      const isGrayedOut = meetingDuration > 8;
 
-                      <div style={{
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        height: '36px',
-                        width: '100%',
-                        padding: '0 8px', // Back to container edge padding
-                        boxSizing: 'border-box'
-                      }}>
-                        {/* Range slider track background - goes fully edge-to-edge */}
+                      return (
                         <div style={{
-                          position: 'absolute',
-                          left: '8px',
-                          right: '8px',
-                          height: '6px',
-                          backgroundColor: '#e5e7eb',
-                          borderRadius: '3px',
-                          zIndex: 1
-                        }} />
-
-                        {/* Active track bar fill - matches native handle coordinates */}
-                        <div style={{
-                          position: 'absolute',
-                          left: '8px',
-                          width: `calc((100% - 16px) * ${(meetingDuration - 1) / 7})`,
-                          height: '6px',
-                          backgroundColor: '#3182F6',
-                          borderRadius: '3px',
-                          zIndex: 2
-                        }} />
-
-                        {/* Dynamic Dark Badge - remains safely offset inside by using 36px boundary offsets to never cross the line borders */}
-                        <div style={{
-                          position: 'absolute',
-                          left: `calc(36px + (100% - 72px) * ${(meetingDuration - 1) / 7})`,
-                          backgroundColor: '#191f28',
-                          color: '#ffffff',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '0.78rem',
-                          fontWeight: '700',
-                          pointerEvents: 'none',
-                          zIndex: 10,
-                          boxShadow: '0 3px 8px rgba(0, 0, 0, 0.22)',
-                          whiteSpace: 'nowrap',
-                          transform: 'translateX(-50%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1.5px solid rgba(255, 255, 255, 0.1)'
+                          maxHeight: '60px',
+                          opacity: isGrayedOut ? 0.6 : 1,
+                          overflow: 'hidden',
+                          transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                          width: '100%'
                         }}>
-                          {(() => {
-                            const mins = meetingDuration * 30;
-                            const hrs = Math.floor(mins / 60);
-                            const remainingMins = mins % 60;
-                            if (hrs > 0) {
-                              return remainingMins > 0 ? `${hrs}시간 ${remainingMins}분` : `${hrs}시간`;
-                            }
-                            return `${mins}분`;
-                          })()}
+
+                          <div style={{
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            height: '36px',
+                            width: '100%',
+                            padding: '0 8px',
+                            boxSizing: 'border-box'
+                          }}>
+                            {/* Transparent click overlay to restore to 4 hours */}
+                            {isGrayedOut && (
+                              <div
+                                onClick={() => handleDurationChange(8)}
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  cursor: 'pointer',
+                                  zIndex: 15
+                                }}
+                              />
+                            )}
+
+                            {/* Range slider track background - goes fully edge-to-edge */}
+                            <div style={{
+                              position: 'absolute',
+                              left: '8px',
+                              right: '8px',
+                              height: '6px',
+                              backgroundColor: '#e5e7eb',
+                              borderRadius: '3px',
+                              zIndex: 1
+                            }} />
+
+                            {/* Active track bar fill - matches native handle coordinates */}
+                            <div style={{
+                              position: 'absolute',
+                              left: '8px',
+                              width: `calc((100% - 16px) * ${(displayDuration - 1) / 7})`,
+                              height: '6px',
+                              backgroundColor: isGrayedOut ? '#d1d5db' : '#3182F6',
+                              borderRadius: '3px',
+                              zIndex: 2,
+                              transition: 'all 0.3s'
+                            }} />
+
+                            {/* Dynamic Dark Badge - remains safely offset inside by using 36px boundary offsets to never cross the line borders */}
+                            <div style={{
+                              position: 'absolute',
+                              left: `calc(36px + (100% - 72px) * ${(displayDuration - 1) / 7})`,
+                              backgroundColor: isGrayedOut ? '#e5e7eb' : '#191f28',
+                              color: isGrayedOut ? '#8b95a1' : '#ffffff',
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              fontSize: '0.78rem',
+                              fontWeight: '700',
+                              pointerEvents: 'none',
+                              zIndex: 10,
+                              boxShadow: isGrayedOut ? '0 1px 3px rgba(0, 0, 0, 0.08)' : '0 3px 8px rgba(0, 0, 0, 0.22)',
+                              whiteSpace: 'nowrap',
+                              transform: 'translateX(-50%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: isGrayedOut ? '1.5px solid rgba(0, 0, 0, 0.04)' : '1.5px solid rgba(255, 255, 255, 0.1)',
+                              transition: 'all 0.3s'
+                            }}>
+                              {(() => {
+                                const mins = displayDuration * 30;
+                                const hrs = Math.floor(mins / 60);
+                                const remainingMins = mins % 60;
+                                if (hrs > 0) {
+                                  return remainingMins > 0 ? `${hrs}시간 ${remainingMins}분` : `${hrs}시간`;
+                                }
+                                return `${mins}분`;
+                              })()}
+                            </div>
+
+                            {/* Hidden native input overlays matching the slider bounds */}
+                            <input
+                              type="range"
+                              min="1"
+                              max="8"
+                              step="1"
+                              value={displayDuration}
+                              onChange={(e) => handleDurationChange(Number(e.target.value))}
+                              style={{
+                                position: 'absolute',
+                                width: 'calc(100% - 16px)',
+                                height: '28px',
+                                left: '8px',
+                                background: 'none',
+                                pointerEvents: 'none',
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                outline: 'none',
+                                margin: 0,
+                                zIndex: 12
+                              }}
+                              className="duration-range-slider-input"
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '-2px', padding: '0 8px' }}>
+                            <span style={{ fontSize: '0.78rem', color: '#9ca3af', fontWeight: 500 }}>30분</span>
+                            <span style={{ fontSize: '0.78rem', color: '#9ca3af', fontWeight: 500 }}>4시간</span>
+                          </div>
                         </div>
-
-                        {/* Hidden native input overlays matching the slider bounds */}
-                        <input
-                          type="range"
-                          min="1"
-                          max="8"
-                          step="1"
-                          value={meetingDuration}
-                          onChange={(e) => handleDurationChange(Number(e.target.value))}
-                          style={{
-                            position: 'absolute',
-                            width: 'calc(100% - 16px)', // Reverted to full width bounds
-                            height: '28px',
-                            left: '8px', // Reverted to edge margin
-                            background: 'none',
-                            pointerEvents: 'none',
-                            appearance: 'none',
-                            WebkitAppearance: 'none',
-                            outline: 'none',
-                            margin: 0,
-                            zIndex: 12
-                          }}
-                          className="duration-range-slider-input"
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '-2px', padding: '0 8px' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#9ca3af', fontWeight: 500 }}>30분</span>
-                        <span style={{ fontSize: '0.78rem', color: '#9ca3af', fontWeight: 500 }}>4시간</span>
-                      </div>
-                    </div>
+                      );
+                    })()}
                   </div>
 
                   {votersCount >= 2 && hasTradeOff && showTradeOff && (
@@ -2445,10 +2470,7 @@ function MeetingDetails() {
       </div>
 
       {/* Yellow Warning Toast with a Warning Icon (Exclamation mark inside triangle) */}
-      <div className={`toast-popup ${showWarningToast ? 'show' : ''}`} style={{
-        borderLeft: '4px solid #f59e0b',
-        boxShadow: '0 4px 18px rgba(245, 158, 11, 0.15)'
-      }}>
+      <div className={`toast-popup ${showWarningToast ? 'show' : ''}`}>
         {/* Yellow Exclamation Warning Mark */}
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />

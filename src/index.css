@@ -50,6 +50,7 @@ body {
   flex: 30;
   min-height: 100vh;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -84,6 +85,7 @@ body {
   flex: 70;
   min-height: 100vh;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   align-items: center;
